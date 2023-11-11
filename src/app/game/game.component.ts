@@ -5,9 +5,12 @@ import { OnInit } from '@angular/core'
 import { MatDialog, } from '@angular/material/dialog';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 import { Firestore, collection, doc, collectionData, getFirestore, onSnapshot } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { addDoc } from '@firebase/firestore';
+import { Observable, Subscription, } from 'rxjs';
+import { addDoc, getDoc, deleteDoc } from '@firebase/firestore';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CollectionReference } from 'firebase/firestore/lite';
+
+
 
 
 @Component({
@@ -30,54 +33,37 @@ export class GameComponent implements OnInit {
   currentCard: string = '';
   game: Game;
 
-  gamesDataBase
-  unsubParams;
-  unsubGames;
-  gameId
   firestore: Firestore = inject(Firestore)
+  gamesRef: CollectionReference
+  gamesData$: Observable<any[]>;
+  gamesDataSubscribtion: Subscription
+  currentGameId: string
 
 
 
   constructor(private route: ActivatedRoute,
-    public dialog: MatDialog) {
-
+    public dialog: MatDialog, private router: Router) {
     this.game = new Game()
-    this.unsubGames = this.subGames()
-    this.gamesDataBase = collection(this.firestore, 'games')
-    this.gamesDataBase.subscribe()
-    
+    this.gamesRef = this.getGamesRef()
+    this.gamesData$ = collectionData(this.gamesRef)
+
+    this.gamesDataSubscribtion = this.gamesData$.subscribe((game) => {
+      console.log('game update', game);
+    });
+
+
   }
 
   ngOnInit() {
     this.newGame()
-    this.route.params.subscribe((params) => {
-      this.gameId = params['id']
-      console.log('params:', params['id'])
-
-    })
-    this.addGame()
-    console.log('database', this.gamesDataBase)
-    let ref = doc(this.gamesDataBase,)
-    console.log('ref',ref.path)
-
   }
 
   ngOnDestroy() {
-    this.unsubGames()
+    if (this.gamesData$) {
+      this.gamesDataSubscribtion.unsubscribe()
+    }
+
     console.log('unsub games')
-  }
-
-
-
-  subGames() {
-    console.log('sub games')
-    return onSnapshot(this.getGamesRef(), (list) => {
-      list.forEach(element => {
-        // console.log('elementdata:', element.data(), 'id:', element.id)
-
-
-      });
-    })
   }
 
   getGamesRef() {
@@ -86,12 +72,12 @@ export class GameComponent implements OnInit {
 
   async addGame() {
     try {
-
-      const docRef = await addDoc(this.getGamesRef(), this.game.toJson())
-
+      let docRef = await addDoc(this.gamesRef, this.game.toJson());
       console.log("Document written with ID: ", docRef?.id);
-    }
-    catch (err) {
+      this.currentGameId = docRef.id;
+      // Navigating to the '/game' route with the 'id' parameter
+      this.router.navigate(['/game', this.currentGameId]);
+    } catch (err) {
       console.error(err);
     }
   }
@@ -108,7 +94,7 @@ export class GameComponent implements OnInit {
 
   newGame() {
     this.game = new Game()
-
+    this.addGame()
   }
 
   takeCard() {
