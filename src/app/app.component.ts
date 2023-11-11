@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+// Import the functions you need from the SDKs you need
 
 @Component({
   selector: 'app-root',

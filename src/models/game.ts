@@ -1,6 +1,6 @@
 
 export class Game {
-    public players: string[] =[]
+    public players: string[] = []
     public stack: string[] = []
     public playedCards: string[] = []
     public currentPlayer: number = 0
@@ -15,6 +15,16 @@ export class Game {
         shuffle(this.stack)
     }
 
+    public toJson() {
+        return {
+            players: this.players,
+            stack: this.stack,
+            playedCards: this.playedCards,
+            currentPlayer: this.currentPlayer
+        }
+    }
+
+
 }
 
 function shuffle<T>(array: T[]): T[] {
@@ -28,3 +38,4 @@ function shuffle<T>(array: T[]): T[] {
     }
     return array
 }
+
